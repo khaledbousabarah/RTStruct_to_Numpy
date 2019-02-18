@@ -58,8 +58,10 @@ def load(path, max_number_of_coords=50000, parallel=True):
             dcm = pydicom.read_file(x)
 
             if dcm.FrameOfReferenceUID == ref:
+                print('True')
                 return dcm
             else:
+                print('Wrong')
                 return False
         except (pydicom.errors.InvalidDicomError, AttributeError):
             return False

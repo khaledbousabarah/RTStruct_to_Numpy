@@ -33,31 +33,34 @@ class rts_mask():
         return self.array
 
     def plot(self, slice_to_plot=None, zoom=.5):
+        total  = self.image.shape[0]
         if slice_to_plot is None:
-            image_to_plot = self.image[self.max_slice, ...]
-            mask_to_plot = self.array[self.max_slice, ...]
+            selected_slice = self.max_slice
         else:
-            image_to_plot = self.image[slice_to_plot, ...]
-            mask_to_plot = self.array[slice_to_plot, ...]
+            selected_slice = slice_to_plot
 
-        X, Y = np.where(mask_to_plot)
-        X_range = image_to_plot.shape[0] - (np.max(X) - np.min(X))
-        Y_range = image_to_plot.shape[1] - (np.max(Y) - np.min(Y))
+        image_to_plot = self.image[selected_slice, ...]
+        mask_to_plot = self.array[selected_slice, ...]
 
-        if zoom > 0:
-            x_diff = int((image_to_plot.shape[0] - X_range * zoom) / 2)
-            y_diff = int((image_to_plot.shape[0] - Y_range * zoom) / 2)
-            image_to_plot = np.pad(image_to_plot, [(x_diff, x_diff) , (y_diff, y_diff)], mode='constant')
-            mask_to_plot = np.pad(mask_to_plot, [(x_diff, x_diff) , (y_diff, y_diff)], mode='constant')
-
+        if np.sum(mask_to_plot) > 0:
             X, Y = np.where(mask_to_plot)
+            X_range = image_to_plot.shape[0] - (np.max(X) - np.min(X))
+            Y_range = image_to_plot.shape[1] - (np.max(Y) - np.min(Y))
 
-            image_to_plot = image_to_plot[np.min(X)-x_diff:np.max(X)+x_diff, np.min(Y)-y_diff:np.max(Y)+y_diff]
-            mask_to_plot = mask_to_plot[np.min(X)-x_diff:np.max(X)+x_diff, np.min(Y)-y_diff:np.max(Y)+y_diff]
+            if zoom > 0:
+                x_diff = int((image_to_plot.shape[0] - X_range * zoom) / 2)
+                y_diff = int((image_to_plot.shape[0] - Y_range * zoom) / 2)
+                image_to_plot = np.pad(image_to_plot, [(x_diff, x_diff) , (y_diff, y_diff)], mode='constant')
+                mask_to_plot = np.pad(mask_to_plot, [(x_diff, x_diff) , (y_diff, y_diff)], mode='constant')
+
+                X, Y = np.where(mask_to_plot)
+
+                image_to_plot = image_to_plot[np.min(X)-x_diff:np.max(X)+x_diff, np.min(Y)-y_diff:np.max(Y)+y_diff]
+                mask_to_plot = mask_to_plot[np.min(X)-x_diff:np.max(X)+x_diff, np.min(Y)-y_diff:np.max(Y)+y_diff]
 
 
         plt.imshow(image_to_plot, cmap='gray')
         plt.contour(mask_to_plot)
         plt.axis('off')
-        plt.title(self.name)
+        plt.title('%s [%s / %s]' % (self.name, selected_slice, total))
         plt.show()
