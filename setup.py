@@ -3,9 +3,9 @@ from setuptools import setup
 setup(
     name='RTStruct_to_Numpy',
     version='',
-    packages=['', 'build.lib', 'build.lib.build.lib'],
+    packages=['', 'build.lib', 'build.lib.build.lib', 'build.lib.build.lib.build.lib'],
     url='',
-    license='mit',
+    license='MIT',
     author='Khaled B',
     author_email='',
     description=''
