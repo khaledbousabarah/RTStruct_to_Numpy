@@ -4,6 +4,9 @@
 
 python setup.py install
 
+Requires installation of dicom_decompresser:
+https://github.com/khaledbousabarah/Dicom_Decompress
+
 ## Usage
 
 Define a path containing the RTStruct and the corresponding Dicom Images
