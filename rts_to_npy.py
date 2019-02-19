@@ -1,7 +1,7 @@
 import os
 import pydicom
 import logging
-from dicom2nifti import compressed_dicom
+import dicom_decompresser
 from rts_helpers import load_rts
 import glob
 import numpy as np
@@ -36,8 +36,7 @@ def load(path, max_number_of_coords=50000, parallel=True):
 
     file = rtstruct[0]
 
-    if compressed_dicom._is_compressed(file):
-        compressed_dicom._decompress_dicom(file, output_file=file)
+    dicom_decompresser.run(file)
 
     rts_data = load_rts(pydicom.read_file(file), max_contour_points=max_number_of_coords, logger=logging)
 
@@ -50,10 +49,7 @@ def load(path, max_number_of_coords=50000, parallel=True):
 
     def load_dicom(x, ref):
         try:
-            if compressed_dicom._is_compressed(file):
-                logging.info('Decompressing %s' % file)
-                compressed_dicom._decompress_dicom(file, output_file=file)
-                print('decompressing')
+            dicom_decompresser.run(x)
 
             dcm = pydicom.read_file(x)
 
