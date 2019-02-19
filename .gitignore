@@ -34,3 +34,5 @@ RTStruct_to_Numpy\.egg-info/SOURCES\.txt
 RTStruct_to_Numpy\.egg-info/top_level\.txt
 
 \.idea/
+
+build/

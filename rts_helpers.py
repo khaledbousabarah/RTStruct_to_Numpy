@@ -1,5 +1,4 @@
 import numpy as np
-import pydicom
 
 def load_rts(rts_dicom, max_contour_points=None, logger=None):
     header_data = rts_dicom.StructureSetROISequence
