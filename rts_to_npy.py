@@ -9,10 +9,12 @@ from matplotlib import path as PolyPath
 from visualization_helpers import rts_study
 import multiprocessing
 from joblib import Parallel, delayed
+from scipy.ndimage import zoom
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
-def load(path, max_number_of_coords=50000, parallel=True):
+
+def load(path, max_number_of_coords=50000, parallel=False, downscaling=0):
     def modality_check(x):
         try:
             dcm = pydicom.read_file(x)
@@ -79,6 +81,9 @@ def load(path, max_number_of_coords=50000, parallel=True):
 
     dicoms = sort_dicoms(dicoms)
     pixel_data = np.stack([x.pixel_array for x in dicoms])
+    if downscaling > 0:
+        pixel_data = zoom(pixel_data, [downscaling] * 3)
+
 
     image_position_patient = [float(x) for x in dicoms[0][('0020', '0032')]]
     pixel_spacing = [float(x) for x in dicoms[0][('0028', '0030')]]
@@ -105,24 +110,32 @@ def load(path, max_number_of_coords=50000, parallel=True):
 
     for x in rts_data:
         name, data = physical_to_pixels(x, image_position_patient, pixel_spacing)
+        if downscaling > 0:
+            data *= downscaling
         contour_data[name] = data
 
     def contour_to_binary(contour, image_shape):
         mask = np.zeros(image_shape)
-        x_dim, y_dim = image_shape[1], image_shape[2]
         non_empty_slices = [x for x in np.unique(contour[:, 2])]
-        X, Y = np.meshgrid(np.linspace(1, x_dim, x_dim), np.linspace(1, y_dim, y_dim))
-        XY = np.dstack((X, Y))
-        XY_flat = XY.reshape((-1, 2))
         for z in non_empty_slices:
             pos = np.where(contour[:, 2] == z)[0]
-            polygon = PolyPath.Path(contour[pos, :2])
-            mask[int(z), ...] = polygon.contains_points(XY_flat).reshape(x_dim, y_dim)
+            contour_slice = contour[pos, :2]
+
+            x0, y0 = int(np.floor(np.min(contour_slice[:, 0]))), int(np.floor(np.min(contour_slice[:, 1])))
+            x1, y1 = int(np.ceil(np.max(contour_slice[:, 0]) )), int(np.ceil(np.max(contour_slice[:, 1])))
+            x_shape, y_shape = x1-x0, y1-y0
+            X, Y = np.meshgrid(np.linspace(x0, x1, x_shape), np.linspace(y0, y1, y_shape))
+            XY = np.dstack((X, Y))
+            XY_flat = XY.reshape((-1, 2))
+
+            polygon = PolyPath.Path(contour_slice)
+            mask[int(z), y0:y1, x0:x1] = polygon.contains_points(XY_flat).reshape(y_shape, x_shape)
         return mask
 
     masks = {}
 
     logging.info('Converting Contours to binary Masks')
+
 
     if parallel:
         tmp = Parallel(n_jobs=num_cores, verbose=0)(delayed(contour_to_binary, check_pickle=True)(
