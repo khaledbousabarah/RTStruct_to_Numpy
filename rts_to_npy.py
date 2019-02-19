@@ -122,7 +122,7 @@ def load(path, max_number_of_coords=50000, parallel=False, downscaling=0):
             contour_slice = contour[pos, :2]
 
             x0, y0 = int(np.floor(np.min(contour_slice[:, 0]))), int(np.floor(np.min(contour_slice[:, 1])))
-            x1, y1 = int(np.ceil(np.max(contour_slice[:, 0]) )), int(np.ceil(np.max(contour_slice[:, 1])))
+            x1, y1 = int(np.ceil(np.max(contour_slice[:, 0]) )) + 1, int(np.ceil(np.max(contour_slice[:, 1]))) + 1
             x_shape, y_shape = x1-x0, y1-y0
             X, Y = np.meshgrid(np.linspace(x0, x1, x_shape), np.linspace(y0, y1, y_shape))
             XY = np.dstack((X, Y))
@@ -141,10 +141,17 @@ def load(path, max_number_of_coords=50000, parallel=False, downscaling=0):
         tmp = Parallel(n_jobs=num_cores, verbose=0)(delayed(contour_to_binary, check_pickle=True)(
             val, pixel_data.shape) for key, val in contour_data.items())
         for i, (key, val) in enumerate(contour_data.items()):
-            masks[key] = tmp[i]
+            if np.sum(tmp[i]) == 0:
+                logging.warning('%s is no valid Mask: Skipping' % key)
+            else:
+                masks[key] = tmp[i]
     else:
         for key, val in contour_data.items():
-            masks[key] = contour_to_binary(val, pixel_data.shape)
+            data = contour_to_binary(val, pixel_data.shape)
+            if np.sum(data) == 0:
+                logging.warning('%s is no valid Mask: Skipping' % key)
+            else:
+                masks[key] = data
 
     logging.info('Done')
 
