@@ -18,7 +18,7 @@ def load(path, max_number_of_coords=50000, parallel=False, downscaling=0):
     def modality_check(x):
         try:
             dcm = pydicom.read_file(x)
-            if dcm.Modality.lower() == "rtstruct":
+            if "Modality" in dcm.dir() and dcm.Modality.lower() == "rtstruct":
                 return True
             else:
                 return False
