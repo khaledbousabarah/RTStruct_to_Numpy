@@ -25,7 +25,7 @@ def load(path, max_number_of_coords=50000, parallel=False, downscaling=0):
         except pydicom.errors.InvalidDicomError:
             return False
 
-    files = [x for x in glob.glob(os.path.join(path, '*')) if os.path.isfile(x)]
+    files = [x for x in glob.glob(os.path.join(path, '**/*'), recursive=True) if os.path.isfile(x)]
     logging.info('Found %s Files in path' % len(files))
     rtstruct = [x for x in files if modality_check(x)]
 
